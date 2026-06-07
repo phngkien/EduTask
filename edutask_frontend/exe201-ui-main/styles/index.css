@@ -1,0 +1,441 @@
+:root {
+    --primary: #2D5BE3;
+    --primary-hover: #1A3AB0;
+    --secondary: #EEF2FD;
+    --dark: #1E293B;
+    --text: #334155;
+    --text-light: #64748B;
+    --bg: #F8FAFC;
+    --white: #FFFFFF;
+    --green: #1A7A4A;
+    --amber: #D97706;
+    --purple: #5B3FBF;
+    --radius: 12px;
+}
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, .logo-text {
+            font-family: 'Bricolage Grotesque', sans-serif;
+            color: var(--dark);
+        }
+
+        /* Navbar */
+        nav {
+            background-color: var(--white);
+            padding: 16px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            background: var(--primary);
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            margin: 0 16px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 100px 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .hero-content {
+            flex: 1;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 32px;
+            max-width: 500px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .hero-image {
+            flex: 1;
+            background: var(--white);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            position: relative;
+            transform: perspective(1000px) rotateY(-5deg);
+        }
+
+        /* Mockup elements */
+        .mockup-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        
+        .mockup-stat {
+            background: #F1F5F9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .mockup-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: #CBD5E1;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .mockup-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 67%;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 5%;
+            background-color: var(--white);
+            text-align: center;
+        }
+
+        .features-title {
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+
+        .features-subtitle {
+            color: var(--text-light);
+            margin-bottom: 60px;
+            font-size: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .card {
+            background: var(--bg);
+            padding: 32px;
+            border-radius: 16px;
+            transition: transform 0.3s;
+            border: 1px solid #E2E8F0;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .card h3 {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            color: var(--text-light);
+            font-size: 15px;
+        }
+
+        /* AI Section Banner */
+        .ai-banner {
+            margin: 80px 5%;
+            background: linear-gradient(135deg, var(--dark), #334155);
+            border-radius: 24px;
+            padding: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--white);
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .ai-banner h2 {
+            color: var(--white);
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+        
+        .ai-banner p {
+            color: #CBD5E1;
+            max-width: 500px;
+        }
+
+        .ai-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid #E2E8F0;
+            color: var(--text-light);
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                padding: 60px 5%;
+            }
+            .hero p {
+                margin: 0 auto 32px auto;
+            }
+            .hero-actions {
+                justify-content: center;
+            }
+            .ai-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 30px;
+            }
+        }
+
+/* MODAL */
+/* 1. Modal Overlay (The background dimmer) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(30, 41, 59, 0.6); /* Uses --dark color with opacity */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    
+    /* Smooth show/hide transitions */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Trigger class to show the modal (Add this via JS) */
+.modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 2. The Modal Box */
+.modal {
+    background-color: var(--white);
+    width: 100%;
+    max-width: 420px; /* Perfect width for a login card */
+    border-radius: var(--radius);
+    box-shadow: 0 10px 25px -5px rgba(30, 41, 59, 0.1), 
+                0 8px 10px -6px rgba(30, 41, 59, 0.1);
+    overflow: hidden;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+/* Animates the modal sliding down slightly when opened */
+.modal-overlay.open .modal {
+    transform: translateY(0);
+}
+
+/* 3. Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--secondary);
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: var(--text-light);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+    color: var(--dark);
+}
+
+/* 4. Modal Body & Form Elements */
+.modal-body {
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+/* Combined styling for both input types used in your HTML */
+.form-input, 
+.form-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    color: var(--dark);
+    background-color: var(--bg);
+    border: 1px solid var(--secondary);
+    border-radius: calc(var(--radius) - 4px); /* Slightly sharper corners inside */
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: var(--text-light);
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(45, 91, 227, 0.15); /* Soft primary focus ring */
+}
+
+/* 5. Modal Footer & Buttons */
+.modal-footer {
+    padding: 16px 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+}

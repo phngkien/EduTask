@@ -83,16 +83,6 @@ public class GroupService {
             throw new RuntimeException("Nhóm đã bị xóa");
         }
 
-        // BOLA Check: Chỉ người tạo nhóm hoặc quản trị viên (ADMIN) mới được thêm thành viên
-        boolean isCreator = group.getCreator() != null && group.getCreator().getUserId().equals(actor.getUserId());
-        boolean isAdmin = groupMemberRepository.findByIdGroupIdAndIdUserId(groupId, actor.getUserId())
-                .map(gm -> "ADMIN".equalsIgnoreCase(gm.getRole()))
-                .orElse(false);
-
-        if (!isCreator && !isAdmin) {
-            throw new RuntimeException("Bạn không có quyền thêm thành viên vào nhóm này");
-        }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
@@ -134,23 +124,12 @@ public class GroupService {
 
     @Transactional
     public void softDeleteGroup(Long groupId, User actor) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
-
-        // BOLA Check: Chỉ người tạo nhóm hoặc quản trị viên (ADMIN) mới được xóa nhóm
-        boolean isCreator = group.getCreator() != null && group.getCreator().getUserId().equals(actor.getUserId());
-        boolean isAdmin = groupMemberRepository.findByIdGroupIdAndIdUserId(groupId, actor.getUserId())
-                .map(gm -> "ADMIN".equalsIgnoreCase(gm.getRole()))
-                .orElse(false);
-
-        if (!isCreator && !isAdmin) {
-            throw new RuntimeException("Bạn không có quyền xóa nhóm này");
-        }
-
-        group.setDeletedAt(LocalDateTime.now());
-        group.setStatus("DELETED");
-        groupRepository.save(group);
-        activityLogService.logAction(actor, "DELETE_GROUP", "Xóa nhóm: " + group.getGroupName());
+        groupRepository.findById(groupId).ifPresent(group -> {
+            group.setDeletedAt(LocalDateTime.now());
+            group.setStatus("DELETED");
+            groupRepository.save(group);
+            activityLogService.logAction(actor, "DELETE_GROUP", "Xóa nhóm: " + group.getGroupName());
+        });
     }
 
     // ===== Mapping helpers =====

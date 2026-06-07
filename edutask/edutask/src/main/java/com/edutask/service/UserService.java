@@ -53,7 +53,7 @@ public class UserService {
             user.setSkills(request.getSkills());
         }
         if (request.getAvailability() != null) {
-            user.setAvailability(request.getAvailability());
+            user.setAvailability(Boolean.parseBoolean(request.getAvailability()));
         }
 
         return toProfileResponse(userRepository.save(user));
@@ -74,7 +74,7 @@ public class UserService {
                 .email(user.getEmail())
                 .avatarUrl(user.getAvatarUrl())
                 .skills(user.getSkills())
-                .availability(user.getAvailability())
+                .availability(String.valueOf(user.getAvailability()))
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
                 .build();
     }

@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
+import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "tasks")
@@ -45,4 +46,24 @@ public class Task {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+private String description;
+
+@Column(name = "category")
+private String category;
+
+@Column(name = "priority")
+private String priority;
+
+@Column(name = "assignment_mode")
+private String assignmentMode;
+
+@Column(name = "suggested_assignee_id")
+private Long suggestedAssigneeId;
+
+@Column(name = "assignment_score")
+private Double assignmentScore;
+
+@Column(name = "assignment_reason", columnDefinition = "NVARCHAR(MAX)")
+private String assignmentReason;
 }

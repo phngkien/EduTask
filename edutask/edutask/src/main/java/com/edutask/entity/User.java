@@ -37,9 +37,14 @@ public class User implements UserDetails {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "skills")
     private String skills;
 
-    private String availability;
+    @Column(name = "availability")
+    private Boolean availability;
+
+    @Column(name = "max_active_tasks")
+    private Integer maxActiveTasks;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -58,10 +63,11 @@ public class User implements UserDetails {
 
     // ===== UserDetails implementation =====
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
-    }
+  @Override
+public Collection<? extends GrantedAuthority> getAuthorities() {
+    Role currentRole = role != null ? role : Role.USER;
+    return List.of(new SimpleGrantedAuthority("ROLE_" + currentRole.name()));
+}
 
     @Override
     public String getPassword() {
