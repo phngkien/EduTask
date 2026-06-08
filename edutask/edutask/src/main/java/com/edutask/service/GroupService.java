@@ -29,13 +29,16 @@ public class GroupService {
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
     private final ActivityLogService activityLogService;
+    private final SubscriptionService subscriptionService;
 
+    @Transactional(readOnly = true)
     public List<GroupDetailResponse> getAllGroups() {
         return groupRepository.findByDeletedAtIsNull().stream()
                 .map(this::toDetailResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<GroupDetailResponse> getGroupsByMember(Long userId) {
         return groupMemberRepository.findByIdUserId(userId).stream()
                 .map(GroupMember::getGroup)
@@ -44,6 +47,7 @@ public class GroupService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public Optional<GroupDetailResponse> getGroupById(Long id) {
         return groupRepository.findById(id)
                 .filter(g -> g.getDeletedAt() == null)
@@ -52,6 +56,14 @@ public class GroupService {
 
     @Transactional
     public GroupDetailResponse createGroup(GroupRequest request, User creator) {
+        // Kiểm tra giới hạn gói miễn phí (tối đa 1 nhóm)
+        if (!subscriptionService.hasActivePaidSubscription(creator)) {
+            long groupCount = groupRepository.countByCreatorUserIdAndDeletedAtIsNull(creator.getUserId());
+            if (groupCount >= 1) {
+                throw new RuntimeException("Gói miễn phí giới hạn tối đa 1 nhóm học. Vui lòng nâng cấp gói để tạo thêm nhóm.");
+            }
+        }
+
         Group group = Group.builder()
                 .groupName(request.getGroupName())
                 .creator(creator)
@@ -81,6 +93,10 @@ public class GroupService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
 
+        if (group.getCreator() == null || !group.getCreator().getUserId().equals(actor.getUserId())) {
+            throw new RuntimeException("Chỉ trưởng nhóm mới có quyền mời thành viên mới vào nhóm.");
+        }
+
         if (group.getDeletedAt() != null) {
             throw new RuntimeException("Nhóm đã bị xóa");
         }
@@ -108,6 +124,7 @@ public class GroupService {
         return toMemberResponse(member);
     }
 
+    @Transactional(readOnly = true)
     public List<GroupMemberResponse> getGroupMembers(Long groupId) {
         return groupMemberRepository.findByIdGroupId(groupId).stream()
                 .map(this::toMemberResponse)
@@ -127,6 +144,9 @@ public class GroupService {
     @Transactional
     public void softDeleteGroup(Long groupId, User actor) {
         groupRepository.findById(groupId).ifPresent(group -> {
+            if (group.getCreator() == null || !group.getCreator().getUserId().equals(actor.getUserId())) {
+                throw new RuntimeException("Chỉ trưởng nhóm mới có quyền xóa nhóm học này.");
+            }
             group.setDeletedAt(LocalDateTime.now());
             group.setStatus("DELETED");
             groupRepository.save(group);
@@ -169,5 +189,43 @@ public class GroupService {
                 .contributionScore(member.getContributionScore())
                 .joinedAt(member.getJoinedAt())
                 .build();
+    }
+
+    @Transactional
+    public void removeMemberFromGroup(Long groupId, Long userId, User actor) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm"));
+
+        if (group.getDeletedAt() != null) {
+            throw new RuntimeException("Nhóm đã bị xóa");
+        }
+
+        boolean isCreator = group.getCreator() != null && group.getCreator().getUserId().equals(actor.getUserId());
+        boolean isSelf = actor.getUserId().equals(userId);
+
+        if (!isCreator && !isSelf) {
+            throw new RuntimeException("Bạn không có quyền thực hiện hành động này. Chỉ trưởng nhóm mới có quyền xóa thành viên, hoặc bạn chỉ có thể tự rời nhóm.");
+        }
+
+        if (isCreator && isSelf) {
+             throw new RuntimeException("Trưởng nhóm không thể tự xóa bản thân khỏi nhóm. Vui lòng chọn tính năng Xóa nhóm.");
+        }
+
+        GroupMemberId memberId = new GroupMemberId(groupId, userId);
+        GroupMember member = groupMemberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên này trong nhóm"));
+
+        List<com.edutask.entity.Task> tasks = taskRepository.findByGroupGroupIdAndDeletedAtIsNull(groupId);
+        for (com.edutask.entity.Task t : tasks) {
+            if (t.getAssignee() != null && t.getAssignee().getUserId().equals(userId)) {
+                t.setAssignee(null);
+                taskRepository.save(t);
+            }
+        }
+
+        groupMemberRepository.delete(member);
+        
+        String actionMsg = isSelf ? "đã tự rời khỏi nhóm" : ("đã xóa thành viên " + member.getUser().getEmail() + " khỏi nhóm");
+        activityLogService.logAction(actor, "REMOVE_MEMBER", actionMsg + " " + group.getGroupName());
     }
 }
