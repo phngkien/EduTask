@@ -4,6 +4,8 @@ import com.edutask.dto.request.UpdateProfileRequest;
 import com.edutask.dto.response.UserProfileResponse;
 import com.edutask.entity.User;
 import com.edutask.repository.UserRepository;
+import com.edutask.repository.ActivityLogRepository;
+import com.edutask.entity.ActivityLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,14 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ActivityLogRepository activityLogRepository;
+
+    public List<ActivityLog> getActivities(Long userId) {
+        // Giới hạn chỉ lấy tối đa 10 hoạt động gần nhất để hiển thị nhanh trên Dashboard
+        return activityLogRepository.findByUserUserIdOrderByCreatedAtDesc(userId).stream()
+                .limit(10)
+                .collect(Collectors.toList());
+    }
 
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);

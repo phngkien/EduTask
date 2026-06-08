@@ -4,6 +4,7 @@ import com.edutask.dto.request.UpdateProfileRequest;
 import com.edutask.dto.response.ApiResponse;
 import com.edutask.dto.response.UserProfileResponse;
 import com.edutask.entity.User;
+import com.edutask.entity.ActivityLog;
 import com.edutask.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,13 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
         return ResponseEntity.ok(ApiResponse.success(userService.getProfile(user)));
+    }
+
+    @GetMapping("/activities")
+    public ResponseEntity<ApiResponse<List<ActivityLog>>> getMyActivities(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = (User) userDetails;
+        return ResponseEntity.ok(ApiResponse.success(userService.getActivities(user.getUserId())));
     }
 
     @PutMapping("/profile")

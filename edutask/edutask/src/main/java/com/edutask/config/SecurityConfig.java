@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/assignments/**").permitAll()
                 .requestMatchers("/api/subscriptions/plans").permitAll()
+                .requestMatchers("/api/subscriptions/webhook").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 // All other requests require authentication
                 .anyRequest().authenticated()

@@ -44,4 +44,38 @@ public class AuthController {
         authService.logout(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công", null));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @RequestBody java.util.Map<String, String> request,
+            jakarta.servlet.http.HttpServletRequest servletRequest) {
+        String email = request.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Email không được để trống");
+        }
+        String origin = servletRequest.getHeader("Origin");
+        if (origin == null || origin.trim().isEmpty()) {
+            origin = "http://localhost:5500"; // Fallback local
+        }
+        authService.forgotPassword(email.trim(), origin);
+        return ResponseEntity.ok(ApiResponse.success("Đã gửi liên kết khôi phục mật khẩu. Vui lòng kiểm tra email của bạn.", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody java.util.Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+        if (token == null || token.trim().isEmpty()) {
+            throw new RuntimeException("Mã token không hợp lệ");
+        }
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new RuntimeException("Mật khẩu mới không được để trống");
+        }
+        if (newPassword.trim().length() < 6) {
+            throw new RuntimeException("Mật khẩu mới phải có ít nhất 6 ký tự");
+        }
+        authService.resetPassword(token.trim(), newPassword.trim());
+        return ResponseEntity.ok(ApiResponse.success("Đặt lại mật khẩu thành công!", null));
+    }
 }
+

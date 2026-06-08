@@ -148,7 +148,7 @@ public AssignmentTaskResponse approveAssignment(Long taskId, Long assigneeId) {
 
     task.setAssignee(assignee);
     task.setAssignmentMode("AUTO_APPROVED");
-    task.setStatus("TO_DO");
+    task.setStatus("TODO");
     task.setUpdatedAt(LocalDateTime.now());
 
     Task savedTask = taskRepository.save(task);
@@ -184,20 +184,8 @@ public AssignmentTaskResponse approveAssignment(Long taskId, Long assigneeId) {
     }
 
    private int countActiveTasks(Long userId) {
-    List<Task> tasks = taskRepository.findAll();
-
-    return (int) tasks.stream()
-            .filter(task -> task.getDeletedAt() == null)
-            .filter(task -> task.getAssignee() != null)
-            .filter(task -> task.getAssignee().getUserId().equals(userId))
-            .filter(task -> {
-                String status = task.getStatus();
-                return status == null
-                        || status.equalsIgnoreCase("TO_DO")
-                        || status.equalsIgnoreCase("IN_PROGRESS");
-            })
-            .count();
-}
+       return (int) taskRepository.countActiveTasksByUserId(userId);
+   }
 
    private double calculateSkillScore(User user, Task task) {
     String userSkills = user.getSkills() == null ? "" : user.getSkills().toLowerCase();

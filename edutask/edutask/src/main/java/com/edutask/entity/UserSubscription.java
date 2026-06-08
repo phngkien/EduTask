@@ -6,7 +6,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_subscriptions")
+@Table(name = "user_subscriptions", indexes = {
+    @Index(name = "idx_sub_user_status", columnList = "user_id, status, end_date DESC")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

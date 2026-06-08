@@ -3,13 +3,14 @@ const pages = {
   tasks: "Công việc",
   groups: "Nhóm học",
   members: "Thành viên",
+  profile: "Hồ sơ",
   notifications: "Thông báo",
   plans: "Gói đăng ký",
 };
 
 const breadcrumbs = {
   dashboard: "Xin chào 👋",
-  tasks: "Quản lý công việc của bạn",
+  tasks: "Quản lý công việc từ backend",
   groups: "Các nhóm học của bạn",
   members: "Chọn một nhóm để xem thành viên",
   profile: "Cập nhật thông tin cá nhân",
@@ -29,11 +30,9 @@ let currentNotifications = [];
 let currentPlans = [];
 let currentTransactions = [];
 let currentActiveSubscription = null;
-let currentActivities = [];
-let paymentPollInterval = null;
 
-const loginForm = document.getElementById("login-form");
-const registerForm = document.getElementById("register-form");
+const loginButton = document.getElementById("login-button");
+const registerButton = document.getElementById("register-button");
 
 async function apiRequest(url, options = {}, retry = true) {
   const token = localStorage.getItem("accessToken");
@@ -256,9 +255,8 @@ function closeAssignModal() {
   document.getElementById("modal-assign")?.classList.remove("open");
 }
 
-if (loginForm) {
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+if (loginButton) {
+  loginButton.addEventListener("click", async () => {
     const username = document.getElementById("login-email")?.value.trim();
     const password = document.getElementById("login-password")?.value.trim();
 
@@ -284,9 +282,8 @@ if (loginForm) {
   });
 }
 
-if (registerForm) {
-  registerForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+if (registerButton) {
+  registerButton.addEventListener("click", async () => {
     const fullName = document.getElementById("register-fullname")?.value.trim();
     const email = document.getElementById("register-email")?.value.trim();
     const password = document.getElementById("register-password")?.value.trim();
@@ -351,7 +348,6 @@ async function initDashboardPage() {
       loadUsers(),
       loadNotifications(),
       loadSubscriptions(),
-      loadRecentActivities(),
     ]);
     fillGroupSelects();
     fillTaskGroupFilter();
@@ -363,7 +359,7 @@ async function initDashboardPage() {
     renderPlans();
   } catch (error) {
     console.error(error);
-    showToast(error.message || "Không tải được dữ liệu", "error");
+    alert(error.message || "Không tải được dữ liệu từ backend");
   }
 }
 
@@ -376,7 +372,6 @@ async function refreshAllData() {
       loadUsers(),
       loadNotifications(),
       loadSubscriptions(),
-      loadRecentActivities(),
     ]);
     fillGroupSelects();
     fillTaskGroupFilter();
@@ -386,9 +381,9 @@ async function refreshAllData() {
     renderProfile();
     renderNotifications();
     renderPlans();
-    showToast("Đã làm mới dữ liệu", "success");
+    showToast("Đã làm mới dữ liệu");
   } catch (error) {
-    showToast(error.message || "Không làm mới được dữ liệu", "error");
+    alert(error.message || "Không làm mới được dữ liệu");
   }
 }
 
@@ -456,7 +451,7 @@ function renderDashboard() {
 
   setText(
     "stat-total-tasks-desc",
-    total ? "" : "Chưa có công việc",
+    total ? "Tải từ backend" : "Chưa có công việc",
   );
   setText(
     "stat-completed-tasks-desc",
@@ -487,9 +482,6 @@ function renderDashboard() {
   recentTasks.forEach((task) =>
     list.appendChild(createDashboardTaskItem(task)),
   );
-  
-  renderRecentActivities();
-  renderDashboardContributions();
 }
 
 function createDashboardTaskItem(task) {
@@ -506,117 +498,6 @@ function createDashboardTaskItem(task) {
     </div>
   `;
   return item;
-}
-
-async function loadRecentActivities() {
-  try {
-    const res = await apiRequest("/users/activities");
-    currentActivities = Array.isArray(getData(res)) ? getData(res) : [];
-  } catch (error) {
-    console.warn("Không tải được hoạt động gần đây", error.message);
-    currentActivities = [];
-  }
-}
-
-function renderRecentActivities() {
-  const list = document.getElementById("recent-activity-list");
-  if (!list) return;
-  list.innerHTML = "";
-
-  if (!currentActivities.length) {
-    list.innerHTML = `<div class="empty-text">Chưa có hoạt động nào</div>`;
-    return;
-  }
-
-  currentActivities.forEach((act) => {
-    const item = document.createElement("div");
-    item.className = "activity-item";
-    
-    let dotChar = "⚡";
-    let bg = "#eef2fd";
-    let color = "#1a3ab0";
-    
-    const action = String(act.action).toUpperCase();
-    if (action.includes("CREATE")) {
-      dotChar = "+";
-      bg = "#e8f5ee";
-      color = "#1a7a4a";
-    } else if (action.includes("DELETE")) {
-      dotChar = "×";
-      bg = "#fdf0f0";
-      color = "#c13535";
-    } else if (action.includes("LOGIN") || action.includes("REGISTER")) {
-      dotChar = "👤";
-      bg = "#f0ecfc";
-      color = "#5b3fbf";
-    } else if (action.includes("UPDATE")) {
-      dotChar = "✎";
-      bg = "#fdf3e3";
-      color = "#9a5e10";
-    }
-
-    item.innerHTML = `
-      <div class="activity-dot" style="background:${bg}; color:${color}; font-size:12px; display:flex; align-items:center; justify-content:center;">${dotChar}</div>
-      <div class="activity-text"><strong>${escapeHtml(act.action)}</strong> – ${escapeHtml(act.description || "")}</div>
-      <div class="activity-time">${formatDateTime(act.createdAt)}</div>
-    `;
-    list.appendChild(item);
-  });
-}
-
-async function renderDashboardContributions() {
-  const container = document.getElementById("contribution-list");
-  if (!container) return;
-  
-  if (!currentGroups.length) {
-    container.innerHTML = `<div class="empty-text">Bạn chưa tham gia nhóm nào</div>`;
-    return;
-  }
-  
-  const groupId = activeGroupId || currentGroups[0].groupId;
-  const groupName = activeGroupName || currentGroups[0].groupName;
-  
-  container.innerHTML = `<div class="empty-text">Đang tải mức đóng góp của nhóm ${escapeHtml(groupName)}...</div>`;
-  
-  try {
-    const res = await apiRequest(`/groups/${groupId}/members`);
-    const members = Array.isArray(getData(res)) ? getData(res) : [];
-    
-    if (!members.length) {
-      container.innerHTML = `<div class="empty-text">Nhóm chưa có thành viên</div>`;
-      return;
-    }
-    
-    container.innerHTML = `
-      <div style="font-size:12px; color:var(--text2); margin-bottom:12px; font-weight:500;">
-        Nhóm học: <strong>${escapeHtml(groupName)}</strong>
-      </div>
-      <div class="contrib-list" style="display:flex; flex-direction:column; gap:12px;"></div>
-    `;
-    
-    const listDiv = container.querySelector(".contrib-list");
-    
-    members.forEach(member => {
-      const score = member.contributionScore || 0;
-      const barPercent = Math.min(score, 100);
-      
-      const item = document.createElement("div");
-      item.className = "contrib-item";
-      item.innerHTML = `
-        <div class="contrib-top" style="display:flex; justify-content:space-between; margin-bottom:4px;">
-          <span class="contrib-name" style="font-weight:500;">${escapeHtml(member.fullName || member.email)}</span>
-          <span class="contrib-pct" style="font-family:monospace; color:var(--accent); font-weight:600;">${score} điểm</span>
-        </div>
-        <div class="contrib-bar" style="height:6px; background:var(--surface2); border-radius:3px; overflow:hidden;">
-          <div class="contrib-fill" style="width:${barPercent}%; height:100%; background:var(--accent); border-radius:3px; transition:width 0.4s ease;"></div>
-        </div>
-      `;
-      listDiv.appendChild(item);
-    });
-  } catch (error) {
-    console.warn("Không tải được mức đóng góp", error.message);
-    container.innerHTML = `<div class="empty-text" style="color:var(--red)">Lỗi tải mức đóng góp</div>`;
-  }
 }
 
 function renderTasks(filter = "all") {
@@ -904,7 +785,7 @@ async function createGroup() {
   const deadline = document.getElementById("group-deadline")?.value;
 
   if (!groupName) {
-    showToast("Vui lòng nhập tên nhóm", "error");
+    alert("Vui lòng nhập tên nhóm");
     return;
   }
 
@@ -925,9 +806,9 @@ async function createGroup() {
     fillTaskGroupFilter();
     renderDashboard();
     renderGroups();
-    showToast("🎉 Tạo nhóm thành công!", "success");
+    alert("Tạo nhóm thành công");
   } catch (error) {
-    showToast(error.message || "Không tạo được nhóm", "error");
+    alert(error.message || "Không tạo được nhóm");
   }
 }
 
@@ -936,12 +817,12 @@ async function addMemberToCurrentGroup() {
   const role = document.getElementById("invite-role-select")?.value || "MEMBER";
 
   if (!activeGroupId) {
-    showToast("Vui lòng chọn nhóm trước", "error");
+    alert("Vui lòng chọn nhóm trước");
     return;
   }
 
   if (!userId) {
-    showToast("Vui lòng chọn thành viên", "error");
+    alert("Vui lòng chọn thành viên");
     return;
   }
 
@@ -957,9 +838,9 @@ async function addMemberToCurrentGroup() {
     await loadGroups();
     await openMembers(activeGroupId, activeGroupName);
     renderGroups();
-    showToast("👤 Thêm thành viên thành công!", "success");
+    alert("Thêm thành viên thành công");
   } catch (error) {
-    showToast(error.message || "Không thêm được thành viên", "error");
+    alert(error.message || "Không thêm được thành viên");
   }
 }
 
@@ -972,7 +853,7 @@ async function createTask() {
   const date = document.getElementById("task-deadline")?.value;
 
   if (!taskName || !groupId) {
-    showToast("Vui lòng nhập tên công việc và chọn nhóm", "error");
+    alert("Vui lòng nhập tên công việc và chọn nhóm");
     return;
   }
 
@@ -999,9 +880,9 @@ async function createTask() {
     renderDashboard();
     renderTasks(currentTaskFilter);
     renderGroups();
-    showToast("✅ Tạo công việc thành công!", "success");
+    alert("Tạo công việc thành công");
   } catch (error) {
-    showToast(error.message || "Không tạo được công việc", "error");
+    alert(error.message || "Không tạo được công việc");
   }
 }
 
@@ -1149,7 +1030,7 @@ async function updateProfile() {
     ?.value.trim();
 
   if (!fullName) {
-    showToast("Vui lòng nhập họ tên", "error");
+    alert("Vui lòng nhập họ tên");
     return;
   }
 
@@ -1161,9 +1042,9 @@ async function updateProfile() {
     currentUser = getData(res);
     await loadCurrentUser();
     renderProfile();
-    showToast("💾 Cập nhật hồ sơ thành công!", "success");
+    alert("Cập nhật hồ sơ thành công");
   } catch (error) {
-    showToast(error.message || "Không cập nhật được hồ sơ", "error");
+    alert(error.message || "Không cập nhật được hồ sơ");
   }
 }
 
@@ -1390,103 +1271,18 @@ function renderPlanCards() {
     list.appendChild(card);
   });
 }
-function closePaymentModal() {
-  document.getElementById("modal-payment")?.classList.remove("open");
-  if (paymentPollInterval) {
-    clearInterval(paymentPollInterval);
-    paymentPollInterval = null;
-  }
-}
-
 async function subscribePlan(planId, amount) {
-  const plan = currentPlans.find(p => p.planId === planId);
-  const planName = plan ? plan.planName : "Gói dịch vụ";
-  const userId = currentUser ? currentUser.userId : "0";
-  
-  // Tạo nội dung chuyển khoản tự động không có dấu cách
-  const description = `EDUTASKSUB${planId}USER${userId}`.toUpperCase();
-  
-  // Tạo VietQR Image URL
-  const bankId = "MB";
-  const accountNo = "00160920049999";
-  const template = "compact2";
-  const accountName = "PHAM NGUYEN KIEN";
-  const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${amount}&addInfo=${encodeURIComponent(description)}&accountName=${encodeURIComponent(accountName)}`;
-  
-  const qrImg = document.getElementById("payment-qr-image");
-  const pName = document.getElementById("payment-plan-name");
-  const pAmount = document.getElementById("payment-amount");
-  const pDesc = document.getElementById("payment-description");
-  
-  if (qrImg) qrImg.src = qrUrl;
-  if (pName) pName.textContent = planName;
-  if (pAmount) pAmount.textContent = formatMoney(amount, plan?.currency || "VND");
-  if (pDesc) pDesc.textContent = description;
-  
-  const modal = document.getElementById("modal-payment");
-  if (modal) modal.classList.add("open");
-  
-  // 1. Dọn dẹp polling cũ nếu có
-  if (paymentPollInterval) clearInterval(paymentPollInterval);
-  
-  // Ghi nhận các mốc so sánh hiện tại của gói đang hoạt động
-  const initialSubId = currentActiveSubscription ? currentActiveSubscription.subscriptionId : null;
-  const initialPlanId = currentActiveSubscription ? currentActiveSubscription.planId : null;
-  const initialEndDate = currentActiveSubscription ? currentActiveSubscription.endDate : null;
-  
-  async function checkPaymentStatus() {
-    try {
-      const res = await apiRequest("/subscriptions/active");
-      const activeSub = getData(res);
-      
-      let isChanged = false;
-      if (!initialSubId && activeSub) {
-        isChanged = true;
-      } else if (activeSub && (activeSub.subscriptionId !== initialSubId || activeSub.planId !== initialPlanId || activeSub.endDate !== initialEndDate)) {
-        isChanged = true;
-      }
-      
-      if (isChanged) {
-        if (paymentPollInterval) {
-          clearInterval(paymentPollInterval);
-          paymentPollInterval = null;
-        }
-        currentActiveSubscription = activeSub;
-        closePaymentModal();
-        await loadSubscriptions();
-        renderPlans();
-        showToast(`🎉 Thanh toán thành công! Gói ${activeSub.planName} đã được tự động kích hoạt!`, "success");
-        return true;
-      }
-    } catch (err) {
-      console.warn("Lỗi kiểm tra trạng thái thanh toán:", err.message);
-    }
-    return false;
-  }
-  
-  // 2. Khởi chạy vòng lặp check thanh toán tự động (mỗi 3 giây)
-  paymentPollInterval = setInterval(async () => {
-    await checkPaymentStatus();
-  }, 3000);
-  
-  const confirmBtn = document.getElementById("confirm-payment-btn");
-  if (confirmBtn) {
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    
-    // Nút này kích hoạt kiểm tra thủ công tức thì, không tự động tạo gói khống nữa
-    newConfirmBtn.addEventListener("click", async () => {
-      newConfirmBtn.disabled = true;
-      newConfirmBtn.textContent = "Đang kiểm tra...";
-      
-      const success = await checkPaymentStatus();
-      if (!success) {
-        showToast("Hệ thống chưa ghi nhận được thanh toán của bạn. Vui lòng chờ 5-10 giây sau khi chuyển khoản và thử lại.", "info");
-      }
-      
-      newConfirmBtn.disabled = false;
-      newConfirmBtn.textContent = "Xác nhận chuyển khoản";
+  if (!confirm("Xác nhận đăng ký gói này?")) return;
+  try {
+    await apiRequest("/subscriptions/subscribe", {
+      method: "POST",
+      body: JSON.stringify({ planId, amount, paymentMethod: "BANK_TRANSFER" }),
     });
+    await loadSubscriptions();
+    renderPlans();
+    alert("Đăng ký gói thành công");
+  } catch (error) {
+    alert(error.message || "Không đăng ký được gói");
   }
 }
 
@@ -1513,99 +1309,9 @@ function renderTransactions() {
   });
 }
 
-async function applyAssign() {
-  const groupId = document.getElementById("assign-group-select")?.value;
-  const resultList = document.getElementById("assign-result-list");
-
-  if (!groupId) {
-    alert("Vui lòng chọn nhóm trước khi phân công tự động");
-    return;
-  }
-
-  if (resultList) {
-    resultList.innerHTML = `<div class="empty-text">Đang phân công tự động...</div>`;
-  }
-
-  try {
-    if (!currentTasks || currentTasks.length === 0) {
-      await loadTasks();
-    }
-
-    const tasksInGroup = currentTasks.filter((task) => {
-      const sameGroup = String(task.groupId) === String(groupId);
-      const notDone = !isDone(task);
-      return sameGroup && notDone;
-    });
-
-    if (!tasksInGroup.length) {
-      if (resultList) {
-        resultList.innerHTML = `<div class="empty-text">Nhóm này chưa có công việc cần phân công</div>`;
-      }
-      return;
-    }
-
-    const assignedResults = [];
-
-    for (const task of tasksInGroup) {
-      const assignedTask = await apiRequest(
-        `/assignments/tasks/${task.taskId}/auto-assign`,
-        {
-          method: "POST",
-        },
-      );
-
-      assignedResults.push(getData(assignedTask));
-    }
-
-    if (resultList) {
-      resultList.innerHTML = assignedResults
-        .map((task) => {
-          const assigneeName =
-            task.assignee?.fullName ||
-            task.assigneeName ||
-            `User ID ${task.assigneeId || task.assignee?.userId || "?"}`;
-
-          return `
-          <div style="
-            background: #fff;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
-          ">
-            <div style="font-weight: 700; color: var(--text); margin-bottom: 4px;">
-              ${escapeHtml(task.taskName || "Công việc")}
-            </div>
-            <div style="font-size: 12px; color: var(--text2);">
-              Đã giao cho: <strong>${escapeHtml(assigneeName)}</strong>
-            </div>
-            <div style="font-size: 12px; color: var(--accent-text); margin-top: 4px;">
-              Điểm phù hợp: ${task.assignmentScore || "?"}/100
-            </div>
-            <div style="font-size: 12px; color: var(--text2); margin-top: 4px;">
-              ${escapeHtml(task.assignmentReason || "Đã phân công tự động thành công.")}
-            </div>
-          </div>
-        `;
-        })
-        .join("");
-    }
-
-    await loadTasks();
-    renderDashboard();
-    renderTasks(currentTaskFilter);
-
-    alert("Phân công tự động thành công!");
-  } catch (error) {
-    console.error(error);
-    if (resultList) {
-      resultList.innerHTML = `
-        <div class="empty-text" style="color: red;">
-          Lỗi phân công: ${escapeHtml(error.message || "Không thể phân công tự động")}
-        </div>
-      `;
-    }
-    alert(error.message || "Không thể phân công tự động");
-  }
+function applyAssign() {
+  closeAssignModal();
+  alert("Chức năng AI sẽ nối backend sau. Hiện đã xóa dữ liệu fix cứng.");
 }
 
 function isDone(task) {
@@ -1676,61 +1382,13 @@ function escapeJs(value = "") {
     .replaceAll('"', '\\"');
 }
 
-function showToast(message, type = "success") {
+function showToast(message) {
   const notif = document.createElement("div");
-  let bg = "rgba(15, 23, 42, 0.85)";
-  let borderColor = "rgba(255, 255, 255, 0.1)";
-  let glowColor = "rgba(255, 255, 255, 0.05)";
-  let icon = "✨";
-  if (type === "success") {
-    borderColor = "rgba(16, 185, 129, 0.4)";
-    glowColor = "rgba(16, 185, 129, 0.15)";
-    icon = "✅";
-  } else if (type === "error") {
-    borderColor = "rgba(239, 68, 68, 0.4)";
-    glowColor = "rgba(239, 68, 68, 0.15)";
-    icon = "❌";
-  } else if (type === "info") {
-    borderColor = "rgba(99, 102, 241, 0.4)";
-    glowColor = "rgba(99, 102, 241, 0.15)";
-    icon = "ℹ️";
-  }
-  
-  notif.style.cssText = `
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: ${bg};
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: #F8FAFC;
-    padding: 14px 22px;
-    border-radius: 12px;
-    font-size: 14px;
-    z-index: 10000;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 15px ${glowColor};
-    border: 1px solid ${borderColor};
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 500;
-  `;
-  notif.innerHTML = `<span style="font-size: 16px;">${icon}</span> <span>${message}</span>`;
+  notif.style.cssText =
+    "position:fixed;bottom:24px;right:24px;background:#1C1A17;color:#fff;padding:12px 18px;border-radius:10px;font-size:13.5px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.2);";
+  notif.textContent = message;
   document.body.appendChild(notif);
-  
-  setTimeout(() => {
-    notif.style.opacity = "1";
-    notif.style.transform = "translateY(0) scale(1)";
-  }, 10);
-  
-  setTimeout(() => {
-    notif.style.opacity = "0";
-    notif.style.transform = "translateY(20px) scale(0.95)";
-    setTimeout(() => notif.remove(), 300);
-  }, 3000);
+  setTimeout(() => notif.remove(), 2500);
 }
 
 function setText(id, text) {
@@ -1758,99 +1416,4 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.pathname.includes("dashboard.html") ||
     document.getElementById("page-dashboard");
   if (isDashboardPage) initDashboardPage();
-});
-
-function togglePasswordVisibility(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  const btn = input.nextElementSibling;
-  if (input.type === "password") {
-    input.type = "text";
-    if (btn) {
-      btn.innerHTML = `
-        <svg class="eye-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
-        </svg>
-      `;
-    }
-  } else {
-    input.type = "password";
-    if (btn) {
-      btn.innerHTML = `
-        <svg class="eye-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-        </svg>
-      `;
-    }
-  }
-}
-
-function openForgotPasswordModal(event) {
-  if (event) event.preventDefault();
-  closeLoginModal();
-  const modal = document.getElementById("forgot-password-modal");
-  if (modal) modal.classList.add("open");
-  const resultDiv = document.getElementById("forgot-password-result");
-  if (resultDiv) {
-    resultDiv.style.display = "none";
-    resultDiv.textContent = "";
-  }
-}
-
-function closeForgotPasswordModal() {
-  const modal = document.getElementById("forgot-password-modal");
-  if (modal) modal.classList.remove("open");
-}
-
-// Lắng nghe submit của form quên mật khẩu
-document.addEventListener("DOMContentLoaded", () => {
-  const forgotForm = document.getElementById("forgot-password-form");
-  if (forgotForm) {
-    forgotForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("forgot-email")?.value.trim();
-      const resultDiv = document.getElementById("forgot-password-result");
-      const submitBtn = document.getElementById("forgot-submit-button");
-      
-      if (!email) {
-        alert("Vui lòng nhập email");
-        return;
-      }
-      
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Đang gửi...";
-      }
-      
-      try {
-        const res = await apiRequest("/auth/forgot-password", {
-          method: "POST",
-          body: JSON.stringify({ email }),
-        });
-        
-        const message = res?.message || "Đặt lại mật khẩu thành công!";
-        if (resultDiv) {
-          resultDiv.style.display = "block";
-          resultDiv.style.background = "rgba(16, 185, 129, 0.1)";
-          resultDiv.style.borderColor = "rgba(16, 185, 129, 0.3)";
-          resultDiv.style.color = "var(--green)";
-          resultDiv.innerHTML = `<strong>Thành công!</strong><br>${message}`;
-        }
-      } catch (error) {
-        if (resultDiv) {
-          resultDiv.style.display = "block";
-          resultDiv.style.background = "rgba(239, 68, 68, 0.1)";
-          resultDiv.style.borderColor = "rgba(239, 68, 68, 0.3)";
-          resultDiv.style.color = "var(--red)";
-          resultDiv.innerHTML = `<strong>Lỗi:</strong><br>${error.message || "Có lỗi xảy ra khi khôi phục mật khẩu"}`;
-        }
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Khôi phục mật khẩu";
-        }
-      }
-    });
-  }
 });

@@ -4,10 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EduTask – Nền tảng Học nhóm thông minh</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=DM+Mono:wght@400;500&family=Inter:wght@300..800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link href="styles/index.css" rel="stylesheet" />
@@ -225,10 +223,10 @@
 
     <!-- MODAL: Login -->
     <div class="modal-overlay" id="login-modal">
-      <form class="modal" id="login-form">
+      <div class="modal">
         <div class="modal-header">
           <div class="modal-title">Đăng nhập</div>
-          <button type="button" class="modal-close" onclick="closeLoginModal()">×</button>
+          <button class="modal-close" onclick="closeLoginModal()">×</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -238,54 +236,39 @@
               class="form-input"
               id="login-email"
               placeholder="Nhập email..."
-              required
             />
           </div>
           <div class="form-group">
             <label class="form-label">Mật khẩu</label>
-            <div style="position: relative;">
-              <input
-                type="password"
-                class="form-input"
-                id="login-password"
-                placeholder="Nhập mật khẩu..."
-                required
-                style="padding-right: 40px;"
-              />
-              <button type="button" onclick="togglePasswordVisibility('login-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none;">
-                <svg class="eye-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                </svg>
-              </button>
-            </div>
-            <div style="text-align: right; margin-top: 8px;">
-              <a href="#" onclick="openForgotPasswordModal(event)" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 500; transition: color 0.2s;">Quên mật khẩu?</a>
-            </div>
+            <input
+              type="password"
+              class="form-textarea"
+              id="login-password"
+              placeholder="Nhập mật khẩu..."
+            />
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary" id="login-button">Đăng nhập</button>
+          <button class="btn btn-primary" id="login-button">Đăng nhập</button>
         </div>
-      </form>
+      </div>
     </div>
 
     <!-- MODAL: Register -->
     <div class="modal-overlay" id="register-modal">
-      <form class="modal" id="register-form">
+      <div class="modal">
         <div class="modal-header">
           <div class="modal-title">Đăng ký</div>
-          <button type="button" class="modal-close" onclick="closeRegisterModal()">×</button>
+          <button class="modal-close" onclick="closeRegisterModal()">×</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Họ tên</label>
+            <label class="form-label">Tên tài khoản</label>
             <input
               type="text"
               class="form-input"
               id="register-fullname"
               placeholder="Nhập họ tên..."
-              required
             />
           </div>
 
@@ -296,86 +279,33 @@
               class="form-input"
               id="register-email"
               placeholder="Nhập email..."
-              required
             />
           </div>
 
           <div class="form-group">
             <label class="form-label">Mật khẩu</label>
-            <div style="position: relative;">
-              <input
-                type="password"
-                class="form-input"
-                id="register-password"
-                placeholder="Nhập mật khẩu..."
-                required
-                style="padding-right: 40px;"
-              />
-              <button type="button" onclick="togglePasswordVisibility('register-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none;">
-                <svg class="eye-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                </svg>
-              </button>
-            </div>
+            <input
+              type="password"
+              class="form-input"
+              id="register-password"
+              placeholder="Nhập mật khẩu..."
+            />
           </div>
 
           <div class="form-group">
             <label class="form-label">Nhập lại mật khẩu</label>
-            <div style="position: relative;">
-              <input
-                type="password"
-                class="form-input"
-                id="register-confirm-password"
-                placeholder="Nhập lại mật khẩu..."
-                required
-                style="padding-right: 40px;"
-              />
-              <button type="button" onclick="togglePasswordVisibility('register-confirm-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none;">
-                <svg class="eye-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary" id="register-button">Đăng ký</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- MODAL: Forgot Password -->
-    <div class="modal-overlay" id="forgot-password-modal">
-      <form class="modal" id="forgot-password-form">
-        <div class="modal-header">
-          <div class="modal-title">Khôi phục mật khẩu</div>
-          <button type="button" class="modal-close" onclick="closeForgotPasswordModal()">×</button>
-        </div>
-        <div class="modal-body">
-          <p style="font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5;">
-            Nhập email tài khoản của bạn để khôi phục mật khẩu. Hệ thống sẽ cấp một mật khẩu tạm thời mới.
-          </p>
-          <div class="form-group">
-            <label class="form-label">Email tài khoản</label>
             <input
-              type="email"
+              type="password"
               class="form-input"
-              id="forgot-email"
-              placeholder="Nhập email của bạn..."
-              required
+              id="register-confirm-password"
+              placeholder="Nhập lại mật khẩu..."
             />
           </div>
-          <div id="forgot-password-result" style="display: none; margin-top: 16px; padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius); font-size: 13px; color: var(--green); line-height: 1.6;">
-            <!-- Result text -->
-          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-ghost" onclick="closeForgotPasswordModal()">Hủy</button>
-          <button type="submit" class="btn btn-primary" id="forgot-submit-button">Khôi phục mật khẩu</button>
+          <button class="btn btn-primary" id="register-button">Đăng ký</button>
         </div>
-      </form>
+      </div>
     </div>
 
     <script src="script.js"></script>

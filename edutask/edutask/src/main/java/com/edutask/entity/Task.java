@@ -8,7 +8,12 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 
 @Entity
-@Table(name = "tasks")
+@Table(name = "tasks", indexes = {
+    @Index(name = "idx_tasks_group", columnList = "group_id"),
+    @Index(name = "idx_tasks_assignee", columnList = "assignee_id"),
+    @Index(name = "idx_tasks_status", columnList = "status"),
+    @Index(name = "idx_tasks_deleted", columnList = "deleted_at")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -14,7 +14,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import com.edutask.dto.request.CassoWebhookRequest;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -52,5 +55,16 @@ public class SubscriptionController {
             @AuthenticationPrincipal UserDetails userDetails) {
         User user = (User) userDetails;
         return ResponseEntity.ok(ApiResponse.success(subscriptionService.getUserTransactions(user.getUserId())));
+    }
+
+    @PostMapping("/webhook")
+    public ResponseEntity<Map<String, Object>> handleCassoWebhook(
+            @RequestHeader(value = "Secure-Token", required = false) String secureToken,
+            @RequestBody CassoWebhookRequest request) {
+        subscriptionService.processCassoWebhook(secureToken, request);
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", 0);
+        response.put("message", "SUCCESS");
+        return ResponseEntity.ok(response);
     }
 }

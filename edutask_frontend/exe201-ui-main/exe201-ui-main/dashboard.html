@@ -5,10 +5,8 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>EduTask – Học nhóm thông minh</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=DM+Mono:wght@400;500&family=Inter:wght@300..800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600&amp;family=DM+Mono:wght@400;500&amp;display=swap"
       rel="stylesheet"
     />
     <link href="styles/dashboard.css" rel="stylesheet" />
@@ -92,6 +90,21 @@
             ></path>
           </svg>
           Thành viên
+        </button>
+        <button class="nav-item" onclick="showPage('profile')">
+          <svg
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewbox="0 0 24 24"
+          >
+            <path
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+          Hồ sơ
         </button>
         <button class="nav-item" onclick="showPage('notifications')">
           <svg
@@ -928,53 +941,6 @@
           <button class="btn btn-primary" onclick="addMemberToCurrentGroup()">
             Thêm thành viên
           </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL: THANH TOÁN (VIETQR) -->
-    <div class="modal-overlay" id="modal-payment">
-      <div class="modal" style="width: 480px; max-width: 90%;">
-        <div class="modal-header">
-          <div class="modal-title">Thanh toán chuyển khoản VietQR</div>
-          <button class="modal-close" onclick="closePaymentModal()">×</button>
-        </div>
-        <div class="modal-body" style="text-align: center; padding: 20px;">
-          <p style="font-size: 13px; color: var(--text2); margin-bottom: 16px;">
-            Quét mã QR dưới đây bằng ứng ứng dụng Ngân hàng (Mobile Banking) của bạn để thanh toán:
-          </p>
-          <div style="background: #fff; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); display: inline-block; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <img id="payment-qr-image" src="" alt="VietQR Code" style="width: 240px; height: 240px; display: block; object-fit: contain;" />
-          </div>
-          <div style="text-align: left; background: var(--surface2); padding: 14px; border-radius: var(--radius); font-size: 13px; color: var(--text);">
-            <div style="margin-bottom: 6px; display: flex; justify-content: space-between;">
-              <span style="color: var(--text2);">Gói đăng ký:</span>
-              <strong id="payment-plan-name">-</strong>
-            </div>
-            <div style="margin-bottom: 6px; display: flex; justify-content: space-between;">
-              <span style="color: var(--text2);">Số tiền:</span>
-              <strong id="payment-amount" style="color: var(--accent);">-</strong>
-            </div>
-            <div style="margin-bottom: 6px; display: flex; justify-content: space-between;">
-              <span style="color: var(--text2);">Số tài khoản:</span>
-              <strong>00160920049999 (MB Bank)</strong>
-            </div>
-            <div style="margin-bottom: 6px; display: flex; justify-content: space-between;">
-              <span style="color: var(--text2);">Chủ tài khoản:</span>
-              <strong>PHAM NGUYEN KIEN</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border2); margin-top: 8px; padding-top: 8px;">
-              <span style="color: var(--text2);">Nội dung chuyển khoản:</span>
-              <strong id="payment-description" style="color: var(--green); font-family: monospace; font-size: 14px;">-</strong>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-          <span style="font-size: 11.5px; color: var(--text3); max-width: 50%; text-align: left;">* Hệ thống tự động kích hoạt gói sau khi nhấn Xác nhận chuyển khoản</span>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-ghost" onclick="closePaymentModal()">Hủy</button>
-            <button class="btn btn-primary" id="confirm-payment-btn">Xác nhận chuyển khoản</button>
-          </div>
         </div>
       </div>
     </div>
