@@ -38,7 +38,9 @@ public class GroupService {
 
     public List<GroupDetailResponse> getGroupsByMember(Long userId) {
         return groupMemberRepository.findByIdUserId(userId).stream()
-                .map(gm -> toDetailResponse(gm.getGroup()))
+                .map(GroupMember::getGroup)
+                .filter(group -> group != null && "ACTIVE".equals(group.getStatus()))
+                .map(this::toDetailResponse)
                 .collect(Collectors.toList());
     }
 
