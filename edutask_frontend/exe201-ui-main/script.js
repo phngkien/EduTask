@@ -9,7 +9,7 @@ const pages = {
 
 const breadcrumbs = {
   dashboard: "Xin chào 👋",
-  tasks: "Quản lý công việc từ backend",
+  tasks: "Quản lý công việc của bạn",
   groups: "Các nhóm học của bạn",
   members: "Chọn một nhóm để xem thành viên",
   profile: "Cập nhật thông tin cá nhân",
@@ -358,7 +358,7 @@ async function initDashboardPage() {
     renderPlans();
   } catch (error) {
     console.error(error);
-    alert(error.message || "Không tải được dữ liệu từ backend");
+    alert(error.message || "Không tải được dữ liệu");
   }
 }
 
@@ -450,7 +450,7 @@ function renderDashboard() {
 
   setText(
     "stat-total-tasks-desc",
-    total ? "Tải từ backend" : "Chưa có công việc",
+    total ? "" : "Chưa có công việc",
   );
   setText(
     "stat-completed-tasks-desc",
@@ -618,41 +618,39 @@ function renderGroups() {
   }
 
   currentGroups.forEach((group) => {
-    if (group.status === "ACTIVE") {
-      const progress = Number(group.progress || 0);
-      const card = document.createElement("div");
-      card.className = "group-card";
-      card.onclick = () => openMembers(group.groupId, group.groupName);
-      card.innerHTML = `
-        <div class="group-card-header">
-          <div class="group-card-color" style="background: var(--accent-bg)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <div class="group-card-name">${escapeHtml(group.groupName || "Nhóm không tên")}</div>
-          <div class="group-card-subject">${escapeHtml(group.status || "Đang hoạt động")}</div>
+    const progress = Number(group.progress || 0);
+    const card = document.createElement("div");
+    card.className = "group-card";
+    card.onclick = () => openMembers(group.groupId, group.groupName);
+    card.innerHTML = `
+      <div class="group-card-header">
+        <div class="group-card-color" style="background: var(--accent-bg)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
         </div>
-        <div class="group-card-body">
-          <div class="group-card-meta">
-            <div class="group-meta-item">${group.membersCount || 0} thành viên</div>
-            <div class="group-meta-item">${group.totalTasks || 0} nhiệm vụ</div>
-          </div>
-          <div class="group-progress">
-            <div class="group-progress-fill" style="width: ${progress}%; background: var(--accent)"></div>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-top:6px;">
-            <span style="font-size:11.5px; color:var(--text3)">${progress}% hoàn thành</span>
-            <span style="font-size:11.5px; color:var(--text3)">Hạn: ${formatDate(group.deadline)}</span>
-          </div>
-          <div class="card-actions-row">
-            <button class="mini-btn" onclick="event.stopPropagation(); openMembers(${group.groupId}, '${escapeJs(group.groupName || "Nhóm")}')">Xem thành viên</button>
-            <button class="mini-btn danger" onclick="event.stopPropagation(); deleteGroup(${group.groupId})">Xóa nhóm</button>
-          </div>
+        <div class="group-card-name">${escapeHtml(group.groupName || "Nhóm không tên")}</div>
+        <div class="group-card-subject">${escapeHtml(group.status || "Đang hoạt động")}</div>
+      </div>
+      <div class="group-card-body">
+        <div class="group-card-meta">
+          <div class="group-meta-item">${group.membersCount || 0} thành viên</div>
+          <div class="group-meta-item">${group.totalTasks || 0} nhiệm vụ</div>
         </div>
-      `;
-      groupsList.appendChild(card);
-    }
+        <div class="group-progress">
+          <div class="group-progress-fill" style="width: ${progress}%; background: var(--accent)"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:6px;">
+          <span style="font-size:11.5px; color:var(--text3)">${progress}% hoàn thành</span>
+          <span style="font-size:11.5px; color:var(--text3)">Hạn: ${formatDate(group.deadline)}</span>
+        </div>
+        <div class="card-actions-row">
+          <button class="mini-btn" onclick="event.stopPropagation(); openMembers(${group.groupId}, '${escapeJs(group.groupName || "Nhóm")}')">Xem thành viên</button>
+          <button class="mini-btn danger" onclick="event.stopPropagation(); deleteGroup(${group.groupId})">Xóa nhóm</button>
+        </div>
+      </div>
+    `;
+    groupsList.appendChild(card);
   });
 }
 
