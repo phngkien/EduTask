@@ -43,7 +43,7 @@ public class User implements UserDetails {
     private String skills;
 
     @Column(name = "availability")
-    private Boolean availability;
+    private String availability;
 
     @Column(name = "max_active_tasks")
     private Integer maxActiveTasks;

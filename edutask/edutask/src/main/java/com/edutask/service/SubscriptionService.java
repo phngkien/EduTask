@@ -94,6 +94,17 @@ public class SubscriptionService {
                 .map(this::toSubscriptionResponse);
     }
 
+    public boolean hasActivePaidSubscription(User user) {
+        if (user == null) return false;
+        Optional<UserSubscription> subOpt = subscriptionRepository
+                .findFirstByUserUserIdAndStatusOrderByEndDateDesc(user.getUserId(), "ACTIVE");
+        if (subOpt.isEmpty()) {
+            return false;
+        }
+        UserSubscription sub = subOpt.get();
+        return sub.getEndDate().isAfter(LocalDateTime.now());
+    }
+
     public List<TransactionResponse> getUserTransactions(Long userId) {
         return transactionRepository.findByUserUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toTransactionResponse)

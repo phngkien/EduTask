@@ -9,4 +9,5 @@ import java.util.List;
 public interface GroupRepository extends JpaRepository<Group, Long> {
     List<Group> findByDeletedAtIsNull();
     List<Group> findByCreatorUserIdAndDeletedAtIsNull(Long userId);
+    long countByCreatorUserIdAndDeletedAtIsNull(Long userId);
 }

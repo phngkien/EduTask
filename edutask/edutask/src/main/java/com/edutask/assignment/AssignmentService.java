@@ -4,12 +4,15 @@ import com.edutask.entity.Task;
 import com.edutask.entity.User;
 import com.edutask.repository.TaskRepository;
 import com.edutask.repository.UserRepository;
+import com.edutask.service.AiService;
+import com.edutask.service.SubscriptionService;
+import com.edutask.service.ActivityLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.edutask.entity.GroupMember;
 import com.edutask.repository.GroupMemberRepository;
-
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -20,122 +23,234 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AssignmentService {
 
-  private final UserRepository userRepository;
-private final TaskRepository taskRepository;
-private final GroupMemberRepository groupMemberRepository;
-private final AssignmentSuggestionRepository suggestionRepository;
-private final AssignmentLogRepository logRepository;
+    private final UserRepository userRepository;
+    private final TaskRepository taskRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final AssignmentSuggestionRepository suggestionRepository;
+    private final AssignmentLogRepository logRepository;
+    private final AiService aiService;
+    private final SubscriptionService subscriptionService;
+    private final ActivityLogService activityLogService;
     
    @Transactional
-public List<AssignmentSuggestionResponse> suggestAssignees(Long taskId) {
-    Task task = taskRepository.findById(taskId)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy task"));
+    public List<AssignmentSuggestionResponse> suggestAssignees(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task"));
 
-    Long groupId = task.getGroup().getGroupId();
-
-    List<GroupMember> groupMembers = groupMemberRepository.findByIdGroupId(groupId);
-
-    List<User> users = groupMembers.stream()
-            .map(GroupMember::getUser)
-            .toList();
-
-    List<AssignmentSuggestionResponse> result = new ArrayList<>();
-
-    for (User user : users) {
-        if (user.getDeletedAt() != null) {
-            continue;
+        // Lấy thông tin user hiện tại đang đăng nhập
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User actor = null;
+        if (principal instanceof User) {
+            actor = (User) principal;
         }
 
-        if (user.getAvailability() != null && !user.getAvailability()) {
-            continue;
+        // Kiểm tra giới hạn dùng AI (tối đa 3 lượt/ngày) của Free Tier
+        if (actor != null && !subscriptionService.hasActivePaidSubscription(actor)) {
+            long dailyAiCount = activityLogService.countAiRequestsToday(actor);
+            if (dailyAiCount >= 3) {
+                throw new RuntimeException("Gói miễn phí giới hạn tối đa 3 lượt dùng AI mỗi ngày. Vui lòng nâng cấp gói dịch vụ để sử dụng không giới hạn.");
+            }
         }
 
-        int activeTaskCount = countActiveTasks(user.getUserId());
-        int maxActiveTasks = user.getMaxActiveTasks() != null ? user.getMaxActiveTasks() : 5;
+        Long groupId = task.getGroup().getGroupId();
+        List<GroupMember> groupMembers = groupMemberRepository.findByIdGroupId(groupId);
+        List<User> users = groupMembers.stream()
+                .map(GroupMember::getUser)
+                .toList();
 
-        if (activeTaskCount >= maxActiveTasks) {
-            continue;
+        List<Map<String, Object>> candidatesList = new ArrayList<>();
+        Map<Long, User> userMap = new HashMap<>();
+        Map<Long, Integer> activeCounts = new HashMap<>();
+        Map<Long, Integer> maxLimits = new HashMap<>();
+
+        for (User user : users) {
+            if (user.getDeletedAt() != null) {
+                continue;
+            }
+            if (user.getAvailability() != null && 
+                (user.getAvailability().equalsIgnoreCase("false") || 
+                 user.getAvailability().equalsIgnoreCase("bận") ||
+                 user.getAvailability().equalsIgnoreCase("busy") ||
+                 user.getAvailability().equalsIgnoreCase("bận hoàn toàn"))) {
+                continue;
+            }
+
+            int activeTaskCount = countActiveTasks(user.getUserId());
+            int maxActiveTasks = user.getMaxActiveTasks() != null ? user.getMaxActiveTasks() : 5;
+
+            if (activeTaskCount >= maxActiveTasks) {
+                continue;
+            }
+
+            userMap.put(user.getUserId(), user);
+            activeCounts.put(user.getUserId(), activeTaskCount);
+            maxLimits.put(user.getUserId(), maxActiveTasks);
+
+            Map<String, Object> candidate = new HashMap<>();
+            candidate.put("userId", user.getUserId());
+            candidate.put("fullName", user.getFullName());
+            candidate.put("skills", user.getSkills() != null ? user.getSkills() : "");
+            candidate.put("activeTaskCount", activeTaskCount);
+            candidate.put("maxActiveTasks", maxActiveTasks);
+            candidatesList.add(candidate);
         }
 
-        double skillScore = calculateSkillScore(user, task);
-        double workloadScore = calculateWorkloadScore(activeTaskCount, maxActiveTasks);
-        double priorityScore = calculatePriorityScore(task, activeTaskCount);
-        double availabilityScore = 10.0;
+        List<AssignmentSuggestionResponse> result = new ArrayList<>();
+        boolean parsedWithAi = false;
 
-        double totalScore = skillScore + workloadScore + priorityScore + availabilityScore;
+        if (!candidatesList.isEmpty()) {
+            try {
+                List<Map<String, Object>> aiSuggestions = aiService.getAiAssignmentSuggestions(
+                        task.getTaskName(),
+                        task.getDescription(),
+                        task.getPriority(),
+                        task.getCategory(),
+                        candidatesList
+                );
 
-        String reason = buildReason(
-                user,
-                task,
-                activeTaskCount,
-                maxActiveTasks,
-                skillScore,
-                workloadScore,
-                priorityScore,
-                totalScore
-        );
+                if (aiSuggestions != null && !aiSuggestions.isEmpty()) {
+                    for (Map<String, Object> item : aiSuggestions) {
+                        if (item.get("userId") == null) {
+                            continue;
+                        }
+                        Long userId = ((Number) item.get("userId")).longValue();
+                        User user = userMap.get(userId);
+                        if (user != null) {
+                            double totalScore = ((Number) item.getOrDefault("totalScore", 0.0)).doubleValue();
+                            double skillScore = ((Number) item.getOrDefault("skillScore", 0.0)).doubleValue();
+                            double workloadScore = ((Number) item.getOrDefault("workloadScore", 0.0)).doubleValue();
+                            double priorityScore = ((Number) item.getOrDefault("priorityScore", 0.0)).doubleValue();
+                            double availabilityScore = ((Number) item.getOrDefault("availabilityScore", 0.0)).doubleValue();
+                            String reason = (String) item.getOrDefault("reason", "");
 
-        AssignmentSuggestionResponse response = AssignmentSuggestionResponse.builder()
-                .userId(user.getUserId())
-                .fullName(user.getFullName())
-                .skills(user.getSkills())
-                .activeTaskCount(activeTaskCount)
-                .maxActiveTasks(maxActiveTasks)
-                .totalScore(round(totalScore))
-                .skillScore(round(skillScore))
-                .workloadScore(round(workloadScore))
-                .priorityScore(round(priorityScore))
-                .availabilityScore(round(availabilityScore))
-                .reason(reason)
-                .build();
+                            AssignmentSuggestionResponse response = AssignmentSuggestionResponse.builder()
+                                    .userId(userId)
+                                    .fullName(user.getFullName())
+                                    .skills(user.getSkills())
+                                    .activeTaskCount(activeCounts.get(userId))
+                                    .maxActiveTasks(maxLimits.get(userId))
+                                    .totalScore(round(totalScore))
+                                    .skillScore(round(skillScore))
+                                    .workloadScore(round(workloadScore))
+                                    .priorityScore(round(priorityScore))
+                                    .availabilityScore(round(availabilityScore))
+                                    .reason(reason)
+                                    .build();
+                            result.add(response);
+                        }
+                    }
+                    parsedWithAi = !result.isEmpty();
+                    if (parsedWithAi && actor != null) {
+                        activityLogService.logAction(actor, "AI_REQUEST", "Đề xuất phân công công việc bằng AI cho task: " + task.getTaskName());
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Lỗi khi gợi ý phân công bằng AI: " + e.getMessage());
+            }
+        }
 
-        result.add(response);
+        // Fallback: nếu AI trống hoặc gặp lỗi, sử dụng giải thuật heuristic cũ
+        if (!parsedWithAi) {
+            result.clear();
+            for (User user : users) {
+                if (user.getDeletedAt() != null) {
+                    continue;
+                }
+                if (user.getAvailability() != null && 
+                    (user.getAvailability().equalsIgnoreCase("false") || 
+                     user.getAvailability().equalsIgnoreCase("bận") ||
+                     user.getAvailability().equalsIgnoreCase("busy") ||
+                     user.getAvailability().equalsIgnoreCase("bận hoàn toàn"))) {
+                    continue;
+                }
+
+                int activeTaskCount = countActiveTasks(user.getUserId());
+                int maxActiveTasks = user.getMaxActiveTasks() != null ? user.getMaxActiveTasks() : 5;
+
+                if (activeTaskCount >= maxActiveTasks) {
+                    continue;
+                }
+
+                double skillScore = calculateSkillScore(user, task);
+                double workloadScore = calculateWorkloadScore(activeTaskCount, maxActiveTasks);
+                double priorityScore = calculatePriorityScore(task, activeTaskCount);
+                double availabilityScore = 10.0;
+
+                double totalScore = skillScore + workloadScore + priorityScore + availabilityScore;
+
+                String reason = buildReason(
+                        user,
+                        task,
+                        activeTaskCount,
+                        maxActiveTasks,
+                        skillScore,
+                        workloadScore,
+                        priorityScore,
+                        totalScore
+                );
+
+                AssignmentSuggestionResponse response = AssignmentSuggestionResponse.builder()
+                        .userId(user.getUserId())
+                        .fullName(user.getFullName())
+                        .skills(user.getSkills())
+                        .activeTaskCount(activeTaskCount)
+                        .maxActiveTasks(maxActiveTasks)
+                        .totalScore(round(totalScore))
+                        .skillScore(round(skillScore))
+                        .workloadScore(round(workloadScore))
+                        .priorityScore(round(priorityScore))
+                        .availabilityScore(round(availabilityScore))
+                        .reason(reason)
+                        .build();
+
+                result.add(response);
+            }
+        }
+
+        result = result.stream()
+                .sorted(Comparator.comparing(AssignmentSuggestionResponse::getTotalScore).reversed())
+                .limit(3)
+                .collect(Collectors.toList());
+
+        suggestionRepository.deleteByTaskId(taskId);
+
+        int rank = 1;
+        for (AssignmentSuggestionResponse item : result) {
+            suggestionRepository.save(AssignmentSuggestion.builder()
+                    .taskId(taskId)
+                    .userId(item.getUserId())
+                    .score(item.getTotalScore())
+                    .skillScore(item.getSkillScore())
+                    .workloadScore(item.getWorkloadScore())
+                    .priorityScore(item.getPriorityScore())
+                    .availabilityScore(item.getAvailabilityScore())
+                    .reason(item.getReason())
+                    .rankNo(rank++)
+                    .status("PENDING")
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
+
+        if (!result.isEmpty()) {
+            AssignmentSuggestionResponse best = result.get(0);
+
+            task.setSuggestedAssigneeId(best.getUserId());
+            task.setAssignmentScore(best.getTotalScore());
+            task.setAssignmentReason(best.getReason());
+            task.setAssignmentMode("SUGGESTED");
+            taskRepository.save(task);
+
+            logRepository.save(AssignmentLog.builder()
+                    .taskId(taskId)
+                    .selectedUserId(best.getUserId())
+                    .action("SUGGESTED")
+                    .reason(best.getReason())
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
+
+        return result;
     }
-
-    result = result.stream()
-            .sorted(Comparator.comparing(AssignmentSuggestionResponse::getTotalScore).reversed())
-            .limit(3)
-            .collect(Collectors.toList());
-
-    suggestionRepository.deleteByTaskId(taskId);
-
-    int rank = 1;
-    for (AssignmentSuggestionResponse item : result) {
-        suggestionRepository.save(AssignmentSuggestion.builder()
-                .taskId(taskId)
-                .userId(item.getUserId())
-                .score(item.getTotalScore())
-                .skillScore(item.getSkillScore())
-                .workloadScore(item.getWorkloadScore())
-                .priorityScore(item.getPriorityScore())
-                .availabilityScore(item.getAvailabilityScore())
-                .reason(item.getReason())
-                .rankNo(rank++)
-                .status("PENDING")
-                .createdAt(LocalDateTime.now())
-                .build());
-    }
-
-    if (!result.isEmpty()) {
-        AssignmentSuggestionResponse best = result.get(0);
-
-        task.setSuggestedAssigneeId(best.getUserId());
-        task.setAssignmentScore(best.getTotalScore());
-        task.setAssignmentReason(best.getReason());
-        task.setAssignmentMode("SUGGESTED");
-        taskRepository.save(task);
-
-        logRepository.save(AssignmentLog.builder()
-                .taskId(taskId)
-                .selectedUserId(best.getUserId())
-                .action("SUGGESTED")
-                .reason(best.getReason())
-                .createdAt(LocalDateTime.now())
-                .build());
-    }
-
-    return result;
-}
 
     
    @Transactional

@@ -76,4 +76,14 @@ public class GroupController {
         groupService.softDeleteGroup(id, actor);
         return ResponseEntity.ok(ApiResponse.success("Xóa nhóm thành công", null));
     }
+
+    @DeleteMapping("/{id}/members/{userId}")
+    public ResponseEntity<ApiResponse<Void>> removeMember(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable("id") Long groupId,
+            @PathVariable("userId") Long userId) {
+        User actor = (User) userDetails;
+        groupService.removeMemberFromGroup(groupId, userId, actor);
+        return ResponseEntity.ok(ApiResponse.success("Xóa thành viên khỏi nhóm thành công", null));
+    }
 }

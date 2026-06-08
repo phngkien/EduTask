@@ -7,8 +7,11 @@ import com.edutask.dto.response.AuthResponse;
 import com.edutask.entity.Token;
 import com.edutask.entity.User;
 import com.edutask.entity.Role;
+import com.edutask.entity.UserSubscription;
 import com.edutask.repository.TokenRepository;
 import com.edutask.repository.UserRepository;
+import com.edutask.repository.PlanRepository;
+import com.edutask.repository.UserSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,6 +34,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final ActivityLogService activityLogService;
+    private final PlanRepository planRepository;
+    private final UserSubscriptionRepository subscriptionRepository;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private JavaMailSender mailSender;
@@ -51,6 +56,19 @@ public class AuthService {
                 .build();
 
         user = userRepository.save(user);
+
+        // Tự động tặng gói dùng thử 7 ngày (Free Trial)
+        final User finalUser = user;
+        planRepository.findAll().stream().findFirst().ifPresent(plan -> {
+            UserSubscription sub = UserSubscription.builder()
+                    .user(finalUser)
+                    .plan(plan)
+                    .startDate(LocalDateTime.now())
+                    .endDate(LocalDateTime.now().plusDays(7))
+                    .status("ACTIVE")
+                    .build();
+            subscriptionRepository.save(sub);
+        });
 
         String accessToken = jwtService.generateToken(user.getEmail());
         String refreshToken = generateAndSaveRefreshToken(user);

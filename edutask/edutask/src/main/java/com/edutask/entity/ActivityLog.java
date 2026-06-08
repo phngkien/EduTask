@@ -2,6 +2,7 @@ package com.edutask.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ public class ActivityLog {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @Column(nullable = false)

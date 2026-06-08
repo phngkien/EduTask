@@ -36,4 +36,10 @@ public class ActivityLogService {
 
         activityLogRepository.save(log);
     }
+
+    public long countAiRequestsToday(User user) {
+        if (user == null) return 0;
+        java.time.LocalDateTime startOfDay = java.time.LocalDateTime.now().with(java.time.LocalTime.MIN);
+        return activityLogRepository.countActionsToday(user.getUserId(), "AI_REQUEST", startOfDay);
+    }
 }
