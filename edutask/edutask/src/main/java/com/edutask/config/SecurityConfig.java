@@ -39,6 +39,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/subscriptions/plans").permitAll()
                 .requestMatchers("/api/subscriptions/webhook").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                // Admin endpoints
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )

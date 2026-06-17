@@ -1,6 +1,7 @@
 package com.edutask.dto.response;
 
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -14,4 +15,6 @@ public class UserProfileResponse {
     private String skills;
     private String availability;
     private String role;
+    private Boolean enabled;
+    private LocalDateTime createdAt;
 }
